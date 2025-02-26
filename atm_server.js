@@ -8,7 +8,7 @@ if (!process.env.FIREBASE_CREDENTIALS) {
 }
 
 admin.initializeApp({
-    credential: admin.credential.cert(process.env.FIREBASE_CREDENTIALS),
+    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_CREDENTIALS)),
 });
 
 admin.firestore().collection('Doctor').limit(1).get()
