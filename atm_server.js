@@ -4,10 +4,9 @@ const admin = require("firebase-admin");
 const { v4: uuidv4 } = require("uuid");
 
 if (!process.env.FIREBASE_CREDENTIALS) {
-    console.log("hoi111");
     throw new Error("FIREBASE_CREDENTIALS environment variable is not set");
 }
-console.log("hoi");
+console.log("hoiii "+require("./healthcareatm-f7f33-firebase-adminsdk-fbsvc-0649e2ea20.json"));
 admin.initializeApp({
     credential: admin.credential.cert(JSON.parse(Buffer.from(process.env.FIREBASE_CREDENTIALS, "base64").toString("utf8"))),
 });
