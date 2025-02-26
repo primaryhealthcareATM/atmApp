@@ -6,12 +6,14 @@ const { v4: uuidv4 } = require("uuid");
 if (!process.env.FIREBASE_CREDENTIALS) {
     throw new Error("FIREBASE_CREDENTIALS environment variable is not set");
 }
-console.log("Decoded Credentials:", Buffer.from(process.env.FIREBASE_CREDENTIALS, "base64").toString("utf8"));
 
 admin.initializeApp({
     credential: admin.credential.cert(JSON.parse(Buffer.from(process.env.FIREBASE_CREDENTIALS, "base64").toString("utf8"))),
 });
 
+admin.firestore().collection('Doctor').limit(1).get()
+    .then(snapshot => console.log("Firestore Test Success:", snapshot.docs.map(doc => doc.data())))
+    .catch(error => console.error("Firestore Test Failed:", error));
 const app = express();
 app.use(bodyParser.json());
 
