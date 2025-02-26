@@ -4,7 +4,7 @@ const admin = require("firebase-admin");
 const { v4: uuidv4 } = require("uuid");
 
 admin.initializeApp({
-    credential: admin.credential.cert(require("./healthcareatm-f7f33-firebase-adminsdk-fbsvc-0649e2ea20.json")),
+    credential: admin.credential.cert(JSON.parse(Buffer.from(process.env.FIREBASE_CREDENTIALS, "base64").toString("utf8"))),
 });
 
 const app = express();
