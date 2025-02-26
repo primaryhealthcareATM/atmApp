@@ -3,6 +3,11 @@ const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
 const { v4: uuidv4 } = require("uuid");
 
+if (!process.env.FIREBASE_CREDENTIALS) {
+    console.log("hoi111");
+    throw new Error("FIREBASE_CREDENTIALS environment variable is not set");
+}
+console.log("hoi");
 admin.initializeApp({
     credential: admin.credential.cert(JSON.parse(Buffer.from(process.env.FIREBASE_CREDENTIALS, "base64").toString("utf8"))),
 });
