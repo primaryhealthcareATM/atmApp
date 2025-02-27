@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
 const { v4: uuidv4 } = require("uuid");
+const { RtcTokenBuilder, RtcRole } = require("agora-token");
 
 if (!process.env.FIREBASE_CREDENTIALS) {
     throw new Error("FIREBASE_CREDENTIALS environment variable is not set");
@@ -11,9 +12,25 @@ admin.initializeApp({
     credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_CREDENTIALS)),
 });
 
-admin.firestore().collection('Doctor').limit(1).get()
-    .then(snapshot => console.log("Firestore Test Success:", snapshot.docs.map(doc => doc.data())))
-    .catch(error => console.error("Firestore Test Failed:", error));
+const APP_ID = "009118564c524e0aa0c2ffb6a7c7d857";
+const APP_CERTIFICATE = "362d15d43eaa4e80b29da557853825cd";
+
+function generateAgoraToken(channelName) {
+    const role = RtcRole.PUBLISHER;
+    const expirationTimeInSeconds = 3600; // 1 hour
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
+
+    return RtcTokenBuilder.buildTokenWithUid(
+        APP_ID,
+        APP_CERTIFICATE,
+        channelName,
+        0,  // UID 0 for any user
+        role,
+        privilegeExpiredTs
+    );
+}
+
 const app = express();
 app.use(bodyParser.json());
 
@@ -41,9 +58,9 @@ async function getDoctorsByLanguage(lang) {
     }
 }
 
-// API to request a doctor
+
 app.post("/request-doctor", async (req, res) => {
-    const { language ,channelName} = req.body;
+    const { language } = req.body;
 
     if (!language) {
         return res.status(400).json({ error: "Language is required" });
@@ -55,14 +72,22 @@ app.post("/request-doctor", async (req, res) => {
         return res.status(404).json({ error: "No doctors available" });
     }
 
-    const requestId = uuidv4();
-    pendingRequests[requestId] = { doctors, currentIndex: 0 };
+    // Generate a new unique channel name
+    const channelName = `channel_${uuidv4()}`;
+    
+    // Generate Agora Token
+    const token = generateAgoraToken(channelName);
 
-    sendCallNotification(requestId,channelName);
-    res.status(200).json({ success: true, requestId });
+    const requestId = uuidv4();
+    pendingRequests[requestId] = { doctors, currentIndex: 0, channelName, token };
+
+    sendCallNotification(requestId,channelName,token);
+    
+    // Send channel name and token in the response
+    res.status(200).json({ success: true, requestId, channelName, token });
 });
 
-async function sendCallNotification(requestId,channelName) {
+async function sendCallNotification(requestId,channelName,token) {
     const request = pendingRequests[requestId];
 
     if (!request || request.currentIndex >= request.doctors.length) {
@@ -80,7 +105,8 @@ async function sendCallNotification(requestId,channelName) {
             type: "call",
             requestId: requestId,
             callerName: requestId,
-            channelName: "HeAlThCaReAtM"
+            channelName: channelName,
+            token: token
         }
     };
 
@@ -89,7 +115,7 @@ async function sendCallNotification(requestId,channelName) {
     } catch (error) {
         console.error("Error sending notification:", error);
         request.currentIndex++;
-        sendCallNotification(requestId,channelName); // Try next doctor
+        sendCallNotification(requestId,channelName,token); // Try next doctor
     }
 }
 
