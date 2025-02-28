@@ -47,7 +47,8 @@ async function getDoctorsByLanguage(lang) {
             doctors.push({
                 id: doc.id,
                 name: doc.data().name,
-                fcmToken: doc.data().fcmToken
+                fcmToken: doc.data().fcmToken,
+                isActive: doc.isActive || false
             });
         });
 
