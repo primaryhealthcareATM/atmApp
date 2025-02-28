@@ -61,7 +61,7 @@ async function getDoctorsByLanguage(lang) {
 
 app.post("/request-doctor", async (req, res) => {
     const { language } = req.body;
-
+    console.log("hoiii");
     if (!language) {
         return res.status(400).json({ error: "Language is required" });
     }
