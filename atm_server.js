@@ -16,7 +16,8 @@ const APP_ID = "009118564c524e0aa0c2ffb6a7c7d857";
 const APP_CERTIFICATE = "362d15d43eaa4e80b29da557853825cd";
 
 function generateAgoraToken(channelName) {
-    const expirationTimeInSeconds = 3600;
+    const role = RtcRole.PUBLISHER;
+    const expirationTimeInSeconds = 3600; // 1 hour
     const currentTimestamp = Math.floor(Date.now() / 1000);
     const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
 
@@ -24,8 +25,8 @@ function generateAgoraToken(channelName) {
         APP_ID,
         APP_CERTIFICATE,
         channelName,
-        0,
-        RtcRole.PUBLISHER,
+        0, // UID 0 for any user
+        role,
         privilegeExpiredTs
     );
 }
@@ -33,7 +34,7 @@ function generateAgoraToken(channelName) {
 const app = express();
 app.use(bodyParser.json());
 
-let pendingRequests = {};
+let pendingRequests = {}; // Track pending doctor calls
 
 async function getDoctorsByLanguage(lang) {
     try {
@@ -44,7 +45,7 @@ async function getDoctorsByLanguage(lang) {
 
         querySnapshot.forEach(doc => {
             const doctorData = doc.data();
-            if (doctorData.isActive && doctorData.fcmToken) {
+            if (doctorData.isActive && doctorData.fcmToken) { // Ensure active & valid token
                 doctors.push({
                     id: doc.id,
                     name: doctorData.name,
@@ -59,6 +60,10 @@ async function getDoctorsByLanguage(lang) {
         return [];
     }
 }
+
+app.get("/request-doctor", (req, res) => {
+    res.send("hoiiii");
+});
 
 app.post("/request-doctor", async (req, res) => {
     const { language } = req.body;
@@ -83,8 +88,65 @@ app.post("/request-doctor", async (req, res) => {
 
     res.status(200).json({ success: true, requestId, channelName, token });
 });
-const PORT = process.env.PORT || 8080;
 
+async function sendCallNotification(requestId) {
+    const request = pendingRequests[requestId];
+
+    if (!request || request.currentIndex >= request.doctors.length) {
+        console.log("❌ No available doctors, stopping notifications.");
+        delete pendingRequests[requestId];
+        return;
+    }
+
+    const doctor = request.doctors[request.currentIndex];
+
+    console.log(`📩 Sending call notification to ${doctor.name}`);
+
+    const message = {
+        token: doctor.fcmToken,
+        data: {
+            type: "call",
+            requestId: requestId,
+            callerName: "Patient Request",
+            channelName: request.channelName,
+            token: request.token,
+        }
+    };
+
+    try {
+        await admin.messaging().send(message);
+        console.log(`✅ Notification sent to ${doctor.name}`);
+    } catch (error) {
+        console.error(`⚠️ Failed to send notification to ${doctor.name}:`, error);
+        request.currentIndex++; // Move to next doctor
+        sendCallNotification(requestId); // Try next doctor
+    }
+}
+
+// API to handle doctor's response
+app.post("/respond-call", async (req, res) => {
+    const { requestId, accepted } = req.body;
+
+    if (!requestId || !(requestId in pendingRequests)) {
+        return res.status(400).json({ error: "Invalid request ID" });
+    }
+
+    const request = pendingRequests[requestId];
+
+    if (accepted === true) {
+        console.log("✅ Doctor accepted the call!");
+        delete pendingRequests[requestId]; // Stop notifications
+    } else {
+        console.log("❌ Doctor declined the call. Trying next...");
+        request.currentIndex++;
+        sendCallNotification(requestId); // Notify next doctor
+    }
+
+    res.status(200).json({ success: true });
+});
+
+// ✅ Fix: Ensure the server binds to a proper port
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
 });
