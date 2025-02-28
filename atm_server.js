@@ -83,3 +83,8 @@ app.post("/request-doctor", async (req, res) => {
 
     res.status(200).json({ success: true, requestId, channelName, token });
 });
+const PORT = process.env.PORT || 8080;
+
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+});
