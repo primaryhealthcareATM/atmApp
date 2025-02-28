@@ -92,9 +92,8 @@ async function sendCallNotification(requestId,channelName,token) {
     const request = pendingRequests[requestId];
 
     if (!request || request.currentIndex >= request.doctors.length) {
-        console.log("❌ No more doctors available");
-        delete pendingRequests[requestId];
-        return;
+        console.log("Resending notifications....");
+        request.currentIndex = 0;
     }
     
     const doctor = request.doctors[request.currentIndex];
