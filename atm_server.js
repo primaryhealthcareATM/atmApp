@@ -25,7 +25,7 @@ function generateAgoraToken(channelName) {
         APP_ID,
         APP_CERTIFICATE,
         channelName,
-        0,  // UID 0 for any user
+        0, // UID 0 for any user
         role,
         privilegeExpiredTs
     );
@@ -34,35 +34,40 @@ function generateAgoraToken(channelName) {
 const app = express();
 app.use(bodyParser.json());
 
-let pendingRequests = {}; // To track doctor responses
+let pendingRequests = {}; // Track pending doctor calls
+
 async function getDoctorsByLanguage(lang) {
-    const doctors = [];
     try {
+        const doctors = [];
         const querySnapshot = await admin.firestore().collection('Doctor')
             .where('language', '==', lang)
             .get();
 
         querySnapshot.forEach(doc => {
-            doctors.push({
-                id: doc.id,
-                name: doc.data().name,
-                fcmToken: doc.data().fcmToken,
-                isActive: doc.data().isActive || false
-            });
+            const doctorData = doc.data();
+            if (doctorData.isActive && doctorData.fcmToken) { // Ensure active & valid token
+                doctors.push({
+                    id: doc.id,
+                    name: doctorData.name,
+                    fcmToken: doctorData.fcmToken,
+                });
+            }
         });
 
         return doctors;
     } catch (error) {
-        console.error("Error fetching doctors:", error);
+        console.error("🔥 Error fetching doctors:", error);
         return [];
     }
 }
 
-app.get("/request-doctor",(req, res) => {res.send("hoiiii")});
+app.get("/request-doctor", (req, res) => {
+    res.send("hoiiii");
+});
 
 app.post("/request-doctor", async (req, res) => {
     const { language } = req.body;
-    console.log("hoiii");
+    
     if (!language) {
         return res.status(400).json({ error: "Language is required" });
     }
@@ -73,38 +78,29 @@ app.post("/request-doctor", async (req, res) => {
         return res.status(404).json({ error: "No doctors available" });
     }
 
-    // Generate a new unique channel name
     const channelName = `channel_${uuidv4()}`;
-    
-    // Generate Agora Token
     const token = generateAgoraToken(channelName);
-
     const requestId = uuidv4();
+
     pendingRequests[requestId] = { doctors, currentIndex: 0, channelName, token };
 
-    sendCallNotification(requestId,channelName,token);
-    
-    // Send channel name and token in the response
+    sendCallNotification(requestId);
+
     res.status(200).json({ success: true, requestId, channelName, token });
 });
 
-async function sendCallNotification(requestId,channelName,token) {
+async function sendCallNotification(requestId) {
     const request = pendingRequests[requestId];
 
     if (!request || request.currentIndex >= request.doctors.length) {
-        console.log("Resending notifications....");
-        request.currentIndex = 0;
-    }
-    
-    const doctor = request.doctors[request.currentIndex];
-    if(!doctor.isActive)
-    {
-        
-        request.currentIndex++;
-        sendCallNotification(requestId, channelName, token);
+        console.log("❌ No available doctors, stopping notifications.");
+        delete pendingRequests[requestId];
         return;
     }
-    console.log(`📩 Sending notification to ${doctor.name}`);
+
+    const doctor = request.doctors[request.currentIndex];
+
+    console.log(`📩 Sending call notification to ${doctor.name}`);
 
     const message = {
         token: doctor.fcmToken,
@@ -112,34 +108,38 @@ async function sendCallNotification(requestId,channelName,token) {
             type: "call",
             requestId: requestId,
             callerName: requestId,
-            channelName: channelName,
-            token: token
+            channelName: request.channelName,
+            token: request.token,
         }
     };
 
     try {
         await admin.messaging().send(message);
+        console.log(`✅ Notification sent to ${doctor.name}`);
     } catch (error) {
-        console.error("Error sending notification:", error);
-        request.currentIndex++;
-        sendCallNotification(requestId,channelName,token); // Try next doctor
+        console.error(`⚠️ Failed to send notification to ${doctor.name}:`, error);
+        request.currentIndex++; // Move to next doctor
+        sendCallNotification(requestId); // Try next doctor
     }
 }
 
 // API to handle doctor's response
 app.post("/respond-call", async (req, res) => {
     const { requestId, accepted } = req.body;
+
     if (!requestId || !(requestId in pendingRequests)) {
         return res.status(400).json({ error: "Invalid request ID" });
     }
 
-    if (accepted=="true") {
+    const request = pendingRequests[requestId];
+
+    if (accepted === "true") {
         console.log("✅ Doctor accepted the call!");
-        delete pendingRequests[requestId]; // Stop trying other doctors
+        delete pendingRequests[requestId]; // Stop notifications
     } else {
         console.log("❌ Doctor declined the call. Trying next...");
-        pendingRequests[requestId].currentIndex++;
-        sendCallNotification(requestId,channelName); // Notify next doctor
+        request.currentIndex++;
+        sendCallNotification(requestId); // Notify next doctor
     }
 
     res.status(200).json({ success: true });
