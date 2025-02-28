@@ -35,7 +35,6 @@ const app = express();
 app.use(bodyParser.json());
 
 let pendingRequests = {}; // To track doctor responses
-console.log("running.....);
 async function getDoctorsByLanguage(lang) {
     const doctors = [];
     try {
