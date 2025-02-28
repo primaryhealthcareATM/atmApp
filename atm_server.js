@@ -58,6 +58,7 @@ async function getDoctorsByLanguage(lang) {
     }
 }
 
+app.get("/request-doctor",(req, res) => {res.send("hoiiii")});
 
 app.post("/request-doctor", async (req, res) => {
     const { language } = req.body;
