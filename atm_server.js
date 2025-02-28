@@ -47,7 +47,7 @@ async function getDoctorsByLanguage(lang) {
                 id: doc.id,
                 name: doc.data().name,
                 fcmToken: doc.data().fcmToken,
-                isActive: doc.isActive || false
+                isActive: doc.data().isActive || false
             });
         });
 
@@ -99,6 +99,7 @@ async function sendCallNotification(requestId,channelName,token) {
     const doctor = request.doctors[request.currentIndex];
     if(!doctor.isActive)
     {
+        
         request.currentIndex++;
         sendCallNotification(requestId, channelName, token);
         return;
