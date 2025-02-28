@@ -95,8 +95,14 @@ async function sendCallNotification(requestId,channelName,token) {
         delete pendingRequests[requestId];
         return;
     }
-
+    
     const doctor = request.doctors[request.currentIndex];
+    if(!doctor.isActive)
+    {
+        request.currentIndex++;
+        sendCallNotification(requestId, channelName, token);
+        return;
+    }
     console.log(`📩 Sending notification to ${doctor.name}`);
 
     const message = {
