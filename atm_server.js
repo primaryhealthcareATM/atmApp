@@ -82,7 +82,7 @@ app.post("/request-doctor", async (req, res) => {
     const token = generateAgoraToken(channelName);
     const requestId = uuidv4();
 
-    pendingRequests[requestId] = { doctors, currentIndex: 0, channelName, token };
+    pendingRequests[requestId] = { doctors, currentIndex: 0, channelName, token, timer: null };
 
     sendCallNotification(requestId);
 
@@ -116,6 +116,13 @@ async function sendCallNotification(requestId) {
     try {
         await admin.messaging().send(message);
         console.log(`✅ Notification sent to ${doctor.name}`);
+
+        // 🔹 Start a 30-second timer for response
+        request.timer = setTimeout(() => {
+            console.log(`⏳ No response from ${doctor.name}, moving to next doctor.`);
+            request.currentIndex++; // Move to next doctor
+            sendCallNotification(requestId); // Try next doctor
+        }, 30000); // 30 seconds
     } catch (error) {
         console.error(`⚠️ Failed to send notification to ${doctor.name}:`, error);
         request.currentIndex++; // Move to next doctor
@@ -135,6 +142,10 @@ app.post("/respond-call", async (req, res) => {
 
     if (accepted === true) {
         console.log("✅ Doctor accepted the call!");
+        
+        // ✅ Stop the timeout since a doctor accepted
+        clearTimeout(request.timer);
+
         delete pendingRequests[requestId]; // Stop notifications
     } else {
         console.log("❌ Doctor declined the call. Trying next...");
