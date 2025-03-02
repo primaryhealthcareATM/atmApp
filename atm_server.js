@@ -125,6 +125,14 @@ async function sendCallNotification(requestId) {
         }, 30000); // 30 seconds
     } catch (error) {
         console.error(`⚠️ Failed to send notification to ${doctor.name}:`, error);
+
+        if (error.code === 'messaging/registration-token-not-registered') {
+            console.log(`🗑 Removing invalid FCM token for ${doctor.name}`);
+
+            // Remove token from Firestore
+            await admin.firestore().collection('Doctor').doc(doctor.id).update({
+                fcmToken: admin.firestore.FieldValue.delete()
+            });
         request.currentIndex++; // Move to next doctor
         sendCallNotification(requestId); // Try next doctor
     }
@@ -155,6 +163,27 @@ app.post("/respond-call", async (req, res) => {
 
     res.status(200).json({ success: true });
 });
+
+app.post("/update-fcm-token", async (req, res) => {
+    const { doctorId, fcmToken } = req.body;
+
+    if (!doctorId || !fcmToken) {
+        return res.status(400).json({ error: "doctorId and fcmToken are required" });
+    }
+
+    try {
+        await admin.firestore().collection("Doctor").doc(doctorId).update({
+            fcmToken: fcmToken,
+        });
+
+        console.log(`✅ FCM token updated for Doctor ID: ${doctorId}`);
+        res.status(200).json({ success: true, message: "FCM token updated successfully" });
+    } catch (error) {
+        console.error("🔥 Error updating FCM token:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 
 // ✅ Fix: Ensure the server binds to a proper port
 const PORT = process.env.PORT || 8080;
