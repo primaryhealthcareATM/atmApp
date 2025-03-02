@@ -137,7 +137,7 @@ async function sendCallNotification(requestId) {
         sendCallNotification(requestId); // Try next doctor
     }
 }
-
+}
 // API to handle doctor's response
 app.post("/respond-call", async (req, res) => {
     const { requestId, accepted } = req.body;
