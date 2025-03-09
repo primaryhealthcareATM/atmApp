@@ -66,12 +66,14 @@ app.get("/request-doctor", (req, res) => {
 });
 
 app.post("/request-doctor", async (req, res) => {
-    const { language } = req.body;
+    const { language,userID} = req.body;
     
     if (!language) {
         return res.status(400).json({ error: "Language is required" });
     }
-
+    if (!userID) {
+        return res.status(400).json({ error: "IserID is required" });
+    }
     const doctors = await getDoctorsByLanguage(language);
 
     if (doctors.length === 0) {
@@ -81,8 +83,7 @@ app.post("/request-doctor", async (req, res) => {
     const channelName = `channel_${uuidv4()}`;
     const token = generateAgoraToken(channelName);
     const requestId = uuidv4();
-
-    pendingRequests[requestId] = { doctors, currentIndex: 0, channelName, token, timer: null };
+    pendingRequests[requestId] = { doctors, currentIndex: 0, channelName, token, userID,timer: null };
 
     sendCallNotification(requestId);
 
@@ -110,6 +111,7 @@ async function sendCallNotification(requestId) {
             callerName: "Patient Request",
             channelName: request.channelName,
             token: request.token,
+            user: request.userID
         }
     };
 
