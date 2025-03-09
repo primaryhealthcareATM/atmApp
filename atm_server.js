@@ -167,14 +167,14 @@ app.post("/respond-call", async (req, res) => {
 });
 
 app.post("/update-fcm-token", async (req, res) => {
-    const { doctorId, fcmToken } = req.body;
+    const { doctorId, fcmToken,who } = req.body;
 
     if (!doctorId || !fcmToken) {
         return res.status(400).json({ error: "doctorId and fcmToken are required" });
     }
 
     try {
-        await admin.firestore().collection("Doctor").doc(doctorId).update({
+        await admin.firestore().collection(who).doc(doctorId).update({
             fcmToken: fcmToken,
         });
 
