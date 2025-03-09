@@ -107,10 +107,10 @@ async function sendCallNotification(requestId) {
         token: doctor.fcmToken,
         "notification": {
         "title": "Doctor Request",
-        "body": "A user is requesting a doctor consultation.",
-        "click_action": "FLUTTER_NOTIFICATION_CLICK"
+        "body": "A user is requesting a doctor consultation."
       },
         data: {
+            click_action: "FLUTTER_NOTIFICATION_CLICK"
             type: "call",
             requestId: requestId,
             callerName: "Patient Request",
