@@ -110,7 +110,7 @@ async function sendCallNotification(requestId) {
         "body": "A user is requesting a doctor consultation."
       },
         data: {
-            click_action: "FLUTTER_NOTIFICATION_CLICK"
+            click_action: "FLUTTER_NOTIFICATION_CLICK",
             type: "call",
             requestId: requestId,
             callerName: "Patient Request",
