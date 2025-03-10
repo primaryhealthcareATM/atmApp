@@ -70,10 +70,19 @@ async function getDoctorsByLanguage(lang) {
 // API Endpoints
 app.get('/', (req, res) => res.send('🚀 Server is running!'));
 
-app.get('/api/tablets', async (req, res) => {
+app.post('/api/tablets', async (req, res) => {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: "Tablet name is required" });
+
     try {
-        const tablets = await Tablet.find();
-        res.json(tablets);
+        const tablet = await Tablet.findOne({ name: name });
+        if (!tablet) return res.status(404).json({ error: "Tablet not found" });
+
+        res.json({
+            name: tablet.name,
+            usage: tablet.purpose,  // Assuming "purpose" is the usage
+            ageLimit: tablet.ageLimit
+        });
     } catch (error) {
         res.status(500).json({ message: "Error fetching tablet data", error });
     }
