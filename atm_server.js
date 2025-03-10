@@ -14,17 +14,17 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // MongoDB Connection
-const mongoURI = process.env.MONGO_URI;
-mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log("✅ Connected to MongoDB"))
-    .catch((error) => {
-        console.error("❌ MongoDB Connection Error:", error);
-        process.exit(1);
-    });
+// const mongoURI = process.env.MONGO_URI;
+// mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+//     .then(() => console.log("✅ Connected to MongoDB"))
+//     .catch((error) => {
+//         console.error("❌ MongoDB Connection Error:", error);
+//         process.exit(1);
+//     });
 
-// Define MongoDB Model for Tablets
-const tabletSchema = new mongoose.Schema({ name: String, purpose: String, ageLimit: Number });
-const Tablet = mongoose.model("Tablet", tabletSchema);
+// // Define MongoDB Model for Tablets
+// const tabletSchema = new mongoose.Schema({ name: String, purpose: String, ageLimit: Number });
+// const Tablet = mongoose.model("Tablet", tabletSchema);
 
 // Firebase Initialization
 if (!process.env.FIREBASE_CREDENTIALS) {
@@ -70,23 +70,23 @@ async function getDoctorsByLanguage(lang) {
 // API Endpoints
 app.get('/', (req, res) => res.send('🚀 Server is running!'));
 
-app.post('/api/tablets', async (req, res) => {
-    const { name } = req.body;
-    if (!name) return res.status(400).json({ error: "Tablet name is required" });
+// app.post('/api/tablets', async (req, res) => {
+//     const { name } = req.body;
+//     if (!name) return res.status(400).json({ error: "Tablet name is required" });
 
-    try {
-        const tablet = await Tablet.findOne({ name: name });
-        if (!tablet) return res.status(404).json({ error: "Tablet not found" });
+//     try {
+//         const tablet = await Tablet.findOne({ name: name });
+//         if (!tablet) return res.status(404).json({ error: "Tablet not found" });
 
-        res.json({
-            name: tablet.name,
-            usage: tablet.purpose,  // Assuming "purpose" is the usage
-            ageLimit: tablet.ageLimit
-        });
-    } catch (error) {
-        res.status(500).json({ message: "Error fetching tablet data", error });
-    }
-});
+//         res.json({
+//             name: tablet.name,
+//             usage: tablet.purpose,  // Assuming "purpose" is the usage
+//             ageLimit: tablet.ageLimit
+//         });
+//     } catch (error) {
+//         res.status(500).json({ message: "Error fetching tablet data", error });
+//     }
+// });
 
 app.post("/request-doctor", async (req, res) => {
     const { language, userID } = req.body;
