@@ -157,5 +157,27 @@ app.post("/respond-call", async (req, res) => {
     res.status(200).json({ success: true });
 });
 
+app.post("/update-fcm-token", async (req, res) => {
+    const { doctorId, fcmToken,who } = req.body;
+
+    if (!doctorId || !fcmToken) {
+        return res.status(400).json({ error: "doctorId and fcmToken are required" });
+    }
+
+    try {
+        await admin.firestore().collection(who).doc(doctorId).update({
+            fcmToken: fcmToken,
+        });
+
+        console.log(✅ FCM token updated for Doctor ID: ${doctorId});
+        res.status(200).json({ success: true, message: "FCM token updated successfully" });
+    } catch (error) {
+        console.error("🔥 Error updating FCM token:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+
+
 const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
