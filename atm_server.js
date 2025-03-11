@@ -169,7 +169,7 @@ app.post("/update-fcm-token", async (req, res) => {
             fcmToken: fcmToken,
         });
 
-        console.log(✅ FCM token updated for Doctor ID: ${doctorId});
+        console.log(`✅ FCM token updated for Doctor ID: ${doctorId}`);
         res.status(200).json({ success: true, message: "FCM token updated successfully" });
     } catch (error) {
         console.error("🔥 Error updating FCM token:", error);
