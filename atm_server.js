@@ -14,17 +14,17 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // MongoDB Connection
-const mongoURI = process.env.MONGO_URI;
-mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log("✅ Connected to MongoDB"))
-    .catch((error) => {
-        console.error("❌ MongoDB Connection Error:", error);
-        process.exit(1);
-    });
+// const mongoURI = process.env.MONGO_URI;
+// mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+//     .then(() => console.log("✅ Connected to MongoDB"))
+//     .catch((error) => {
+//         console.error("❌ MongoDB Connection Error:", error);
+//         process.exit(1);
+//     });
 
-// Define MongoDB Model for Tablets
-const tabletSchema = new mongoose.Schema({ name: String, purpose: String, ageLimit: Number });
-const Tablet = mongoose.model("Tablet", tabletSchema);
+// // Define MongoDB Model for Tablets
+// const tabletSchema = new mongoose.Schema({ name: String, purpose: String, ageLimit: Number });
+// const Tablet = mongoose.model("Tablet", tabletSchema);
 
 // Firebase Initialization
 if (!process.env.FIREBASE_CREDENTIALS) {
