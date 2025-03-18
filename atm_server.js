@@ -91,10 +91,9 @@ app.post('/tablets', async (req, res) => {
         for (let word of tabList) {
             console.log('word: ',word);
             let trimmedWord = word.trim().toLowerCase();
-            tablet = await Tablet.findOne(
-                { 'product name': { $regex: new RegExp('^' + trimmedWord + '$', 'i') } },
-                { 'salt_composition': { $regex: new RegExp('^' + trimmedWord + '$', 'i') } }
-            );
+            tablet =  await mongoose.connection.collection('tabletDatabase').findOne({
+            'product name': word // or salt_composition if needed
+        });
             if (tablet) break;
         }
         console.log('tablet: ',tablet);
