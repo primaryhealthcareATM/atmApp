@@ -23,17 +23,18 @@ mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
     });
 
 // Define MongoDB Model for Tablets
-const tabletSchema = new mongoose.Schema(
-    'product name': String,        // Note the exact field name with space
-    marketer: String,
-    salt_composition: String,
-    introduction: String,
-    benefits: String,
-    description: String,
-    how_to_use: String,
-    safety_advise: String,
-    mrp: Number
-);
+const tabletSchema = new mongoose.Schema({
+    'product name': { type: String },
+    marketer: { type: String },
+    salt_composition: { type: String },
+    introduction: { type: String },
+    benefits: { type: String },
+    description: { type: String },
+    how_to_use: { type: String },
+    safety_advise: { type: String },
+    mrp: { type: Number }
+});
+
 
 const Tablet = mongoose.model("Tablet", tabletSchema);
 
