@@ -34,6 +34,7 @@ const tabletSchema = new mongoose.Schema(
     safety_advise: String,
     mrp: Number
 );
+
 const Tablet = mongoose.model("Tablet", tabletSchema);
 
 // Firebase Initialization
@@ -83,23 +84,33 @@ app.get('/', (req, res) => res.send('🚀 Server is running!'));
 app.post('/tablets', async (req, res) => {
     const { name } = req.body;
     console.log(name);
+
     if (!name) return res.status(400).json({ error: "Tablet name is required" });
     let tabList = name.split('\n');
-    console.log('tabList: ',tabList);
+    console.log('tabList: ', tabList);
+
     try {
         let tablet;
         for (let word of tabList) {
-            console.log('word: ',word);
+            console.log('word: ', word);
             let trimmedWord = word.trim().toLowerCase();
-            tablet =  await mongoose.connection.collection('tabletDatabase').findOne({
-            'product name': word // or salt_composition if needed
-        });
-            if (tablet) break;
+            
+            // Use the model to query the database, not the raw collection
+            tablet = await Tablet.findOne({
+                $or: [
+                    { 'product name': { $regex: new RegExp(trimmedWord, 'i') } },
+                    { salt_composition: { $regex: new RegExp(trimmedWord, 'i') } }
+                ]
+            });
+
+            if (tablet) break; // Found the tablet, no need to continue
         }
-        console.log('tablet: ',tablet);
+        console.log('tablet: ', tablet);
+
         if (!tablet) {
             return res.status(404).json({ error: "Tablet not found" });
         }
+
         res.json({
             name: tablet['product name'],
             usage: tablet.description,
@@ -109,7 +120,6 @@ app.post('/tablets', async (req, res) => {
         res.status(500).json({ message: "Error fetching tablet data", error });
     }
 });
-
 
 
 app.post("/request-doctor", async (req, res) => {
