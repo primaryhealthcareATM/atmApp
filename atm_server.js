@@ -81,12 +81,7 @@ app.post('/tablets', async (req, res) => {
         for (let word of tabList) {
             console.log('word: ',word);
             let trimmedWord = word.trim().toLowerCase();
-            tablet = await Tablet.findOne({
-                $or: [
-                    { 'product name': word },
-                    { 'salt_composition': word }
-                ]
-            });
+            tablet = await Tablet.findOne({ 'product name': word });
             if (tablet) break;
         }
         console.log('tablet: ',tablet);
