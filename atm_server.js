@@ -98,6 +98,8 @@ app.post('/tablets', async (req, res) => {
             let trimmedWord = word.trim().toLowerCase();
 
             // Query the tablet collection directly from the database
+            let tablet1 = await mongoose.connection.db.collection('tablet_collection');
+            console.log("tab: ",tablet1);
             tablet = await mongoose.connection.db.collection('tablet_collection').findOne({
                 'product name': { $regex: new RegExp('^' + trimmedWord + '$', 'i') } // match product name exactly
             });
