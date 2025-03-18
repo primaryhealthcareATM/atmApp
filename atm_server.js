@@ -83,8 +83,8 @@ app.post('/tablets', async (req, res) => {
             let trimmedWord = word.trim().toLowerCase();
             tablet = await Tablet.findOne({
                 $or: [
-                    { 'product name': trimmedWord },
-                    { 'salt_composition': trimmedWord }
+                    { 'product name': { $regex: new RegExp('^' + trimmedWord + '$', 'i') } },
+                    { 'salt_composition': { $regex: new RegExp('^' + trimmedWord + '$', 'i') } }
                 ]
             });
             if (tablet) break;
