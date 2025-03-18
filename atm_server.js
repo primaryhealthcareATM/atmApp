@@ -23,7 +23,17 @@ mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
     });
 
 // Define MongoDB Model for Tablets
-const tabletSchema = new mongoose.Schema({ name: String, purpose: String, ageLimit: Number });
+const tabletSchema = new mongoose.Schema(
+    'product name': String,        // Note the exact field name with space
+    marketer: String,
+    salt_composition: String,
+    introduction: String,
+    benefits: String,
+    description: String,
+    how_to_use: String,
+    safety_advise: String,
+    mrp: Number
+);
 const Tablet = mongoose.model("Tablet", tabletSchema);
 
 // Firebase Initialization
@@ -81,7 +91,10 @@ app.post('/tablets', async (req, res) => {
         for (let word of tabList) {
             console.log('word: ',word);
             let trimmedWord = word.trim().toLowerCase();
-            tablet = await Tablet.findOne({ 'product name': word });
+            tablet = await Tablet.findOne(
+                { 'product name': { $regex: new RegExp('^' + trimmedWord + '$', 'i') } },
+                { 'salt_composition': { $regex: new RegExp('^' + trimmedWord + '$', 'i') } }
+            );
             if (tablet) break;
         }
         console.log('tablet: ',tablet);
