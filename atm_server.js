@@ -72,6 +72,7 @@ app.get('/', (req, res) => res.send('🚀 Server is running!'));
 
 app.post('/tablets', async (req, res) => {
     const { name } = req.body;
+    console.log(name);
     if (!name) return res.status(400).json({ error: "Tablet name is required" });
     let tabList = name.split('\n');
     console.log('tabList: ',tabList);
