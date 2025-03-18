@@ -85,8 +85,9 @@ app.get('/', (req, res) => res.send('🚀 Server is running!'));
 app.post('/tablets', async (req, res) => {
     const { name } = req.body;
     console.log(name);
-
+    
     if (!name) return res.status(400).json({ error: "Tablet name is required" });
+    
     let tabList = name.split('\n');
     console.log('tabList: ', tabList);
 
@@ -95,19 +96,16 @@ app.post('/tablets', async (req, res) => {
         for (let word of tabList) {
             console.log('word: ', word);
             let trimmedWord = word.trim().toLowerCase();
-            
-            // Use the model to query the database, not the raw collection
-            tablet = await Tablet.findOne({
-                $or: [
-                    { 'product name': { $regex: new RegExp(trimmedWord, 'i') } },
-                    { salt_composition: { $regex: new RegExp(trimmedWord, 'i') } }
-                ]
+
+            // Query the tablet collection directly from the database
+            tablet = await mongoose.connection.db.collection('tablet_collection').findOne({
+                'product name': { $regex: new RegExp('^' + trimmedWord + '$', 'i') } // match product name exactly
             });
 
-            if (tablet) break; // Found the tablet, no need to continue
+            if (tablet) break;
         }
-        console.log('tablet: ', tablet);
 
+        console.log('tablet: ', tablet);
         if (!tablet) {
             return res.status(404).json({ error: "Tablet not found" });
         }
@@ -118,6 +116,7 @@ app.post('/tablets', async (req, res) => {
             ageLimit: tablet.mrp
         });
     } catch (error) {
+        console.error("Error fetching tablet data:", error);
         res.status(500).json({ message: "Error fetching tablet data", error });
     }
 });
