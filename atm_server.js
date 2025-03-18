@@ -70,7 +70,7 @@ async function getDoctorsByLanguage(lang) {
 // API Endpoints
 app.get('/', (req, res) => res.send('🚀 Server is running!'));
 
-app.post('/api/tablets', async (req, res) => {
+app.post('/tablets', async (req, res) => {
     const { name } = req.body;
     if (!name) return res.status(400).json({ error: "Tablet name is required" });
     let tabList = name.split('\n');
