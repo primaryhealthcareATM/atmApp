@@ -73,20 +73,36 @@ app.get('/', (req, res) => res.send('🚀 Server is running!'));
 app.post('/api/tablets', async (req, res) => {
     const { name } = req.body;
     if (!name) return res.status(400).json({ error: "Tablet name is required" });
-
+    let tabList = name.split('\n');
+    console.log('tabList: ',tabList);
     try {
-        const tablet = await Tablet.findOne({ name: name });
-        if (!tablet) return res.status(404).json({ error: "Tablet not found" });
-
+        let tablet;
+        for (let word of tabList) {
+            console.log('word: ',word);
+            let trimmedWord = word.trim().toLowerCase();
+            tablet = await Tablet.findOne({
+                $or: [
+                    { 'product name': trimmedWord },
+                    { 'salt_composition': trimmedWord }
+                ]
+            });
+            if (tablet) break;
+        }
+        console.log('tablet: ',tablet);
+        if (!tablet) {
+            return res.status(404).json({ error: "Tablet not found" });
+        }
         res.json({
-            name: tablet.name,
-            usage: tablet.purpose,  // Assuming "purpose" is the usage
-            ageLimit: tablet.ageLimit
+            name: tablet['product name'],
+            usage: tablet.description,
+            ageLimit: tablet.mrp
         });
     } catch (error) {
         res.status(500).json({ message: "Error fetching tablet data", error });
     }
 });
+
+
 
 app.post("/request-doctor", async (req, res) => {
     const { language, userID } = req.body;
