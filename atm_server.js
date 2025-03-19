@@ -88,7 +88,7 @@ app.post('/tablets', async (req, res) => {
     
     if (!name) return res.status(400).json({ error: "Tablet name is required" });
     
-    let tabList = name.split('\n').map(word => word.trim());
+    let tabList = name.split('\n');
     console.log('tabList: ', tabList);
 
     try {
@@ -99,7 +99,7 @@ app.post('/tablets', async (req, res) => {
             // Query the tablet collection directly from the database
             // let tablet1 = await mongoose.connection.db.collection('tablet_collection').find({}).toArray();
             tablet = await mongoose.connection.db.collection('tablet_collection').findOne({
-                'product name': word// match product name exactly
+                'product name': word.trim()// match product name exactly
             });
 
             if (tablet) break;
