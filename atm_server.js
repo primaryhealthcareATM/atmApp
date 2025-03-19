@@ -96,13 +96,15 @@ app.post('/tablets', async (req, res) => {
         for (let word of tabList) {
             console.log('word: ', word);
 
-            // Query the tablet collection directly from the database
-            // let tablet1 = await mongoose.connection.db.collection('tablet_collection').find({}).toArray();
+            // Query the tablet collection using $or to match either 'Product Name' or 'salt_composition'
             tablet = await mongoose.connection.db.collection('tablet_collection').findOne({
-                'Product Name': word.trim()// match product name exactly
+                $or: [
+                    { 'Product Name': word.trim() }, // match Product Name exactly
+                    { 'salt_composition': { $regex: word.trim(), $options: 'i' } } // match salt_composition (case insensitive)
+                ]
             });
 
-            if (tablet) break;
+            if (tablet) break; // Break once a match is found
         }
 
         console.log('tablet: ', tablet);
@@ -110,16 +112,19 @@ app.post('/tablets', async (req, res) => {
             return res.status(404).json({ error: "Tablet not found" });
         }
 
+        // Respond with tablet details
         res.json({
             name: tablet['Product Name'],
             usage: tablet.description,
-            ageLimit: tablet.mrp
+            ageLimit: tablet.mrp,
+            saltComposition: tablet.salt_composition // Include salt_composition in the response
         });
     } catch (error) {
         console.error("Error fetching tablet data:", error);
         res.status(500).json({ message: "Error fetching tablet data", error });
     }
 });
+
 
 
 app.post("/request-doctor", async (req, res) => {
