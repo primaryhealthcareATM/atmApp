@@ -99,7 +99,7 @@ app.post('/tablets', async (req, res) => {
             // Query the tablet collection directly from the database
             // let tablet1 = await mongoose.connection.db.collection('tablet_collection').find({}).toArray();
             tablet = await mongoose.connection.db.collection('tablet_collection').findOne({
-                'product name': "Loratadine"//word.trim()// match product name exactly
+                'Product Name': "Loratadine"//word.trim()// match product name exactly
             });
 
             if (tablet) break;
