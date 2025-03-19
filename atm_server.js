@@ -111,7 +111,7 @@ app.post('/tablets', async (req, res) => {
         }
 
         res.json({
-            name: tablet['product name'],
+            name: tablet['Product Name'],
             usage: tablet.description,
             ageLimit: tablet.mrp
         });
