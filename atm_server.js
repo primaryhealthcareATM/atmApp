@@ -94,13 +94,13 @@ app.post('/tablets', async (req, res) => {
     try {
         let tablet;
         for (let word of tabList) {
-            console.log('word: ', word);
+            console.log('word: ', word.trim());
 
             // Query the tablet collection using $or to match either 'Product Name' or 'salt_composition'
             tablet = await mongoose.connection.db.collection('tablet_collection').findOne({
                 $or: [
                     { 'Product Name': word.trim() }, // match Product Name exactly
-                    { 'salt_composition': { $regex: word.trim(), $options: 'i' } } // match salt_composition (case insensitive)
+                    { 'salt_composition': word.trim() } // match salt_composition (case insensitive)
                 ]
             });
 
