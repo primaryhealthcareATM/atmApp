@@ -88,7 +88,7 @@ app.post('/tablets', async (req, res) => {
     
     if (!name) return res.status(400).json({ error: "Tablet name is required" });
     
-    let tabList = name.split('\n');
+    let tabList = name.split(' ');
     console.log('tabList: ', tabList);
 
     try {
