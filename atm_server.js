@@ -113,12 +113,7 @@ app.post('/tablets', async (req, res) => {
         }
 
         // Respond with tablet details
-        res.json({
-            name: tablet['Product Name'],
-            usage: tablet.description,
-            ageLimit: tablet.mrp,
-            saltComposition: tablet.salt_composition // Include salt_composition in the response
-        });
+        res.json(tablet);
     } catch (error) {
         console.error("Error fetching tablet data:", error);
         res.status(500).json({ message: "Error fetching tablet data", error });
