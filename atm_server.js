@@ -88,24 +88,33 @@ app.post('/tablets', async (req, res) => {
     
     if (!name) return res.status(400).json({ error: "Tablet name is required" });
     
-    let tabList = name.split(/[\n\s]+/);
-    console.log('tabList: ', tabList);
+    // let tabList = name.split(/[\n\s]+/);
+    // console.log('tabList: ', tabList);
 
     try {
         let tablet;
-        for (let word of tabList) {
-            console.log('word: ', word.trim());
+        // for (let word of tabList) {
+        //     console.log('word: ', word.trim());
 
-            // Query the tablet collection using $or to match either 'Product Name' or 'salt_composition'
-            tablet = await mongoose.connection.db.collection('tablet_collection').findOne({
-                $or: [
-                    { 'Search': word.trim() }, // match Product Name exactly
-                    { 'salt_composition': word.trim() } // match salt_composition (case insensitive)
-                ]
-            });
+        //     // Query the tablet collection using $or to match either 'Product Name' or 'salt_composition'
+            // tablet = await mongoose.connection.db.collection('tablet_collection').findOne({
+            //     $or: [
+            //         { 'Search': word.trim() }, // match Product Name exactly
+            //         { 'salt_composition': word.trim() } // match salt_composition (case insensitive)
+            //     ]
+            // });
 
-            if (tablet) break; // Break once a match is found
-        }
+        //     if (tablet) break; // Break once a match is found
+        // }
+            tablet = await mongoose.connection.db.collection('tablet_collection').findOne(
+                // {
+                // $or: [
+                //     { 'Search': word.trim() }, // match Product Name exactly
+                //     { 'salt_composition': word.trim() } // match salt_composition (case insensitive)
+                // ]
+            // }
+            );
+        
 
         console.log('tablet: ', tablet);
         if (!tablet) {
