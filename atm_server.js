@@ -24,7 +24,7 @@ mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
 
 // Define MongoDB Model for Tablets
 const tabletSchema = new mongoose.Schema({
-    'product name': { type: String },
+    'search': { type: String },
     marketer: { type: String },
     salt_composition: { type: String },
     introduction: { type: String },
