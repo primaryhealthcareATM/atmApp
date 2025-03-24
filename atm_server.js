@@ -99,7 +99,7 @@ app.post('/tablets', async (req, res) => {
             // Query the tablet collection using $or to match either 'Product Name' or 'salt_composition'
             tablet = await mongoose.connection.db.collection('tablet_collection').findOne({
                 $or: [
-                    { 'Product Name': word.trim() }, // match Product Name exactly
+                    { 'Search': word.trim() }, // match Product Name exactly
                     { 'salt_composition': word.trim() } // match salt_composition (case insensitive)
                 ]
             });
