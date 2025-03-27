@@ -141,40 +141,58 @@ app.post("/request-doctor", async (req, res) => {
 
 async function sendCallNotification(requestId) {
     if (!requestId || !(requestId in pendingRequests)) return;
+
     const request = pendingRequests[requestId];
-    if (!request || request.currentIndex == 0) {
-        console.log("❌ No available doctors, sending notifications.");
+
+    // Check if the request is already resolved (either accepted or no active doctors)
+    if (!request || request.currentIndex === -1) {
+        console.log("❌ No active request, stopping notifications.");
+        delete pendingRequests[requestId];  // Clean up the request if no active doctors
+        return;
     }
-    
+
     const doctor = request.doctors[request.currentIndex];
     console.log(`📩 Sending call notification to ${doctor.name}`);
-    
+
     const message = {
         token: doctor.fcmToken,
         notification: { title: "Doctor Request", body: "A user is requesting a doctor consultation." },
         data: { click_action: "FLUTTER_NOTIFICATION_CLICK", type: "call", requestId, channelName: request.channelName, token: request.token, user: request.userID }
     };
-    
+
     try {
         await admin.messaging().send(message);
         console.log(`✅ Notification sent to ${doctor.name}`);
-        
+
+        // Set a timeout to check for a response (30 seconds)
         request.timer = setTimeout(() => {
             console.log(`⏳ No response from ${doctor.name}, moving to next doctor.`);
-            request.currentIndex = (request.currentIndex + 1) % request.doctors.length; // Cycle through the doctors
-            
-            sendCallNotification(requestId); // Send call notification to the next doctor
+            request.currentIndex = (request.currentIndex + 1) % request.doctors.length; // Cycle through doctors
+
+            // If all doctors have been tried, stop sending notifications
+            if (request.currentIndex === 0) {
+                console.log("❌ All doctors have been notified, stopping notifications.");
+                delete pendingRequests[requestId];  // Clean up after trying all doctors
+                return;
+            }
+
+            sendCallNotification(requestId);  // Send notification to the next doctor
         }, 30000); // 30 seconds timeout
     } catch (error) {
         console.error(`⚠️ Failed to send notification to ${doctor.name}:`, error);
+
+        // Handle doctor token errors (e.g., token no longer valid)
         if (error.code === 'messaging/registration-token-not-registered') {
             await admin.firestore().collection('Doctor').doc(doctor.id).update({ fcmToken: admin.firestore.FieldValue.delete() });
         }
-        request.currentIndex = (request.currentIndex + 1) % request.doctors.length; // Cycle through the doctors
-        sendCallNotification(requestId); // Continue to the next doctor
+
+        // Try the next doctor if the current one fails
+        request.currentIndex = (request.currentIndex + 1) % request.doctors.length;
+        sendCallNotification(requestId);  // Continue to the next doctor
     }
 }
 
+// In your /respond-call endpoint, make sure to resolve the request
 app.post("/respond-call", async (req, res) => {
     const { requestId, accepted } = req.body;
     if (!requestId || !(requestId in pendingRequests)) return res.status(400).json({ error: "Invalid request ID" });
@@ -183,7 +201,7 @@ app.post("/respond-call", async (req, res) => {
     if (accepted) {
         console.log("✅ Doctor accepted the call!");
         clearTimeout(request.timer);
-        delete pendingRequests[requestId];
+        delete pendingRequests[requestId];  // Remove the request after it's accepted
     } else {
         console.log("❌ Doctor declined the call. Trying next...");
         request.currentIndex = (request.currentIndex + 1) % request.doctors.length; // Move to the next doctor
