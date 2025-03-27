@@ -172,7 +172,7 @@ async function sendCallNotification(requestId) {
             // If all doctors have been tried, check if we should restart the cycle
             if (request.currentIndex === 0) {
                 request.attemptCount++;
-                if (request.attemptCount >= 1) {
+                if (request.attemptCount >= 2) {
                     console.log("❌ All doctors have been notified twice, stopping notifications.");
                     delete pendingRequests[requestId];  // Clean up after trying all doctors twice
                     return;
