@@ -133,7 +133,7 @@ app.post("/request-doctor", async (req, res) => {
     const token = generateAgoraToken(channelName);
     const requestId = uuidv4();
 
-    pendingRequests[requestId] = { doctors, currentIndex: 0, channelName, token, userID, timer: null };
+    pendingRequests[requestId] = { doctors, currentIndex: 0, channelName, token, userID, timer: null, attemptCount: 0 };
     sendCallNotification(requestId);
 
     res.status(200).json({ success: true, requestId, channelName, token });
@@ -169,14 +169,20 @@ async function sendCallNotification(requestId) {
             console.log(`⏳ No response from ${doctor.name}, moving to next doctor.`);
             request.currentIndex = (request.currentIndex + 1) % request.doctors.length; // Cycle through doctors
 
-            // If all doctors have been tried, stop sending notifications
+            // If all doctors have been tried, check if we should restart the cycle
             if (request.currentIndex === 0) {
-                console.log("❌ All doctors have been notified, stopping notifications.");
-                delete pendingRequests[requestId];  // Clean up after trying all doctors
-                return;
+                request.attemptCount++;
+                if (request.attemptCount >= 2) {
+                    console.log("❌ All doctors have been notified twice, stopping notifications.");
+                    delete pendingRequests[requestId];  // Clean up after trying all doctors twice
+                    return;
+                } else {
+                    console.log("🔄 Restarting notification cycle from first doctor.");
+                    sendCallNotification(requestId);  // Restart notification cycle from the first doctor
+                }
+            } else {
+                sendCallNotification(requestId);  // Send notification to the next doctor
             }
-
-            sendCallNotification(requestId);  // Send notification to the next doctor
         }, 30000); // 30 seconds timeout
     } catch (error) {
         console.error(`⚠️ Failed to send notification to ${doctor.name}:`, error);
@@ -209,6 +215,7 @@ app.post("/respond-call", async (req, res) => {
     }
     res.status(200).json({ success: true });
 });
+
 
 
 app.post("/update-fcm-token", async (req, res) => {
