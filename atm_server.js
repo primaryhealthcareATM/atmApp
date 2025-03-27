@@ -210,6 +210,7 @@ app.post("/respond-call", async (req, res) => {
         delete pendingRequests[requestId];  // Remove the request after it's accepted
     } else {
         console.log("❌ Doctor declined the call. Trying next...");
+        clearTimeout(request.timer);
         request.currentIndex = (request.currentIndex + 1) % request.doctors.length; // Move to the next doctor
         sendCallNotification(requestId); // Continue with the next doctor
     }
