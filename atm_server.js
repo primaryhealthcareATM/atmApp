@@ -140,6 +140,7 @@ app.post("/request-doctor", async (req, res) => {
 });
 
 async function sendCallNotification(requestId) {
+    if (!requestId || !(requestId in pendingRequests)) return;
     const request = pendingRequests[requestId];
     if (!request || request.currentIndex == 0) {
         console.log("❌ No available doctors, sending notifications.");
