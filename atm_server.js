@@ -141,10 +141,8 @@ app.post("/request-doctor", async (req, res) => {
 
 async function sendCallNotification(requestId) {
     const request = pendingRequests[requestId];
-    if (!request || request.currentIndex >= request.doctors.length) {
-        console.log("❌ No available doctors, stopping notifications.");
-        delete pendingRequests[requestId];
-        return;
+    if (!request || request.currentIndex == 0) {
+        console.log("❌ No available doctors, sending notifications.");
     }
     
     const doctor = request.doctors[request.currentIndex];
@@ -159,25 +157,27 @@ async function sendCallNotification(requestId) {
     try {
         await admin.messaging().send(message);
         console.log(`✅ Notification sent to ${doctor.name}`);
+        
         request.timer = setTimeout(() => {
             console.log(`⏳ No response from ${doctor.name}, moving to next doctor.`);
-            request.currentIndex++;
-            sendCallNotification(requestId);
-        }, 30000);
+            request.currentIndex = (request.currentIndex + 1) % request.doctors.length; // Cycle through the doctors
+            
+            sendCallNotification(requestId); // Send call notification to the next doctor
+        }, 30000); // 30 seconds timeout
     } catch (error) {
         console.error(`⚠️ Failed to send notification to ${doctor.name}:`, error);
         if (error.code === 'messaging/registration-token-not-registered') {
             await admin.firestore().collection('Doctor').doc(doctor.id).update({ fcmToken: admin.firestore.FieldValue.delete() });
         }
-        request.currentIndex++;
-        sendCallNotification(requestId);
+        request.currentIndex = (request.currentIndex + 1) % request.doctors.length; // Cycle through the doctors
+        sendCallNotification(requestId); // Continue to the next doctor
     }
 }
 
 app.post("/respond-call", async (req, res) => {
     const { requestId, accepted } = req.body;
     if (!requestId || !(requestId in pendingRequests)) return res.status(400).json({ error: "Invalid request ID" });
-    
+
     const request = pendingRequests[requestId];
     if (accepted) {
         console.log("✅ Doctor accepted the call!");
@@ -185,11 +185,12 @@ app.post("/respond-call", async (req, res) => {
         delete pendingRequests[requestId];
     } else {
         console.log("❌ Doctor declined the call. Trying next...");
-        request.currentIndex++;
-        sendCallNotification(requestId);
+        request.currentIndex = (request.currentIndex + 1) % request.doctors.length; // Move to the next doctor
+        sendCallNotification(requestId); // Continue with the next doctor
     }
     res.status(200).json({ success: true });
 });
+
 
 app.post("/update-fcm-token", async (req, res) => {
     const { doctorId, fcmToken,who } = req.body;
