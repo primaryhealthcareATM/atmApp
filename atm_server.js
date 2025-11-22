@@ -95,12 +95,12 @@ app.post("/create-payment", async (req, res) => {
         }
 
         const qrData = {
-            type: "upi_qr",
-            usage: "single_use",
-            fixed_amount: true,
-            payment_amount: Math.round(amount * 100), // in paise
-            description: description || "Payment",
-            notes: { receipt: "rcpt_" + uuidv4() }
+              type: "link_qr",   // not UPI QR
+              usage: "single_use",
+              fixed_amount: true,
+              payment_amount: amount * 100,
+              description: description || "Payment",
+              notes: { receipt: randomReceipt }
         };
 
         if (name) qrData.name = name;
@@ -333,6 +333,7 @@ app.post("/update-fcm-token", async (req, res) => {
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
 
 
 
