@@ -121,6 +121,28 @@ app.post("/create-payment", async (req, res) => {
     }
 });
 
+// Check payment status
+app.get("/payment-status/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const payment = await razorpay.paymentLink.fetch(id);
+
+        return res.status(200).json({
+            success: true,
+            status: payment.status  // "paid", "pending", or "cancelled"
+        });
+
+    } catch (err) {
+        console.error("🔥 Error checking payment:", err);
+        return res.status(500).json({
+            error: "Failed to fetch payment status",
+            details: err.toString()
+        });
+    }
+});
+
+
 // API Endpoints
 app.get('/', (req, res) => res.send('🚀 Server is running!'));
 
@@ -316,4 +338,5 @@ app.post("/update-fcm-token", async (req, res) => {
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
 
