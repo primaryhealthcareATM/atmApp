@@ -5,7 +5,7 @@ const mongoose = require("mongoose");
 const admin = require("firebase-admin");
 const { v4: uuidv4 } = require("uuid");
 const { RtcTokenBuilder, RtcRole } = require("agora-token");
-
+const Razorpay = require("razorpay");
 // Initialize Express App
 const app = express();
 
@@ -78,6 +78,48 @@ async function getDoctorsByLanguage(lang) {
         return [];
     }
 }
+
+// --------------------- RAZORPAY INIT (NO CHANGE TO REST OF CODE) ---------------------
+const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET
+});
+
+// --------------------- ADD NEW ENDPOINT HERE ---------------------
+app.post("/create-payment", async (req, res) => {
+    try {
+        const { amount, packageName } = req.body;
+
+        if (!amount) {
+            return res.status(400).json({ error: "Amount is required" });
+        }
+
+        const randomReceipt = "rcpt_" + uuidv4();
+
+        const qrData = {
+            type: "upi_qr",
+            name: packageName || "Health Package",
+            usage: "single_use",
+            fixed_amount: true,
+            payment_amount: amount * 100,
+            description: `Payment for ${packageName || "Package"}`,
+            customer_id: undefined,
+            notes: { receipt: randomReceipt }
+        };
+
+        const qr = await razorpay.qrCode.create(qrData);
+
+        res.json({
+            success: true,
+            qr_url: qr.image_url,
+            qr_id: qr.id
+        });
+
+    } catch (error) {
+        console.error("🔥 Razorpay QR Error:", error);
+        res.status(500).json({ error: "Payment QR failed", details: error });
+    }
+});
 
 // API Endpoints
 app.get('/', (req, res) => res.send('🚀 Server is running!'));
@@ -274,3 +316,4 @@ app.post("/update-fcm-token", async (req, res) => {
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
