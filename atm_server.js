@@ -100,7 +100,7 @@ app.post("/create-payment", async (req, res) => {
               fixed_amount: true,
               payment_amount: amount * 100,
               description: description || "Payment",
-              notes: { receipt: randomReceipt }
+              notes: { puspose: "QR Payment" }
         };
 
         if (name) qrData.name = name;
@@ -333,6 +333,7 @@ app.post("/update-fcm-token", async (req, res) => {
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
 
 
 
