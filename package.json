@@ -17,5 +17,6 @@
     "firebase-admin": "^13.1.0",
     "mongoose": "^8.12.1",
     "uuid": "^11.1.0"
+    "razorpay": "^2.9.4" 
   }
 }
