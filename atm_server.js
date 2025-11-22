@@ -88,25 +88,27 @@ const razorpay = new Razorpay({
 // --------------------- ADD NEW ENDPOINT HERE ---------------------
 app.post("/create-payment", async (req, res) => {
     try {
-        const { amount, packageName } = req.body;
+        const { amount, name, description } = req.body;
 
-        if (!amount) {
-            return res.status(400).json({ error: "Amount is required" });
+        if (!amount || isNaN(amount) || amount <= 0) {
+            return res.status(400).json({ error: "Valid amount is required" });
         }
 
         const randomReceipt = "rcpt_" + uuidv4();
 
         const qrData = {
-            type: "upi_qr",
-            name: packageName || "Health Package",
-            usage: "single_use",
-            fixed_amount: true,
-            payment_amount: amount * 100,
-            description: `Payment for ${packageName || "Package"}`,
-            customer_id: undefined,
+            type: "upi_qr",             // always UPI QR
+            usage: "single_use",        // single use
+            fixed_amount: true,         // fixed amount
+            payment_amount: amount * 100, // in paise
+            description: description || "Payment", // optional description
             notes: { receipt: randomReceipt }
         };
 
+        // Only add name if provided
+        if (name) qrData.name = name;
+
+        // Create QR via Razorpay
         const qr = await razorpay.qrCode.create(qrData);
 
         res.json({
@@ -117,7 +119,7 @@ app.post("/create-payment", async (req, res) => {
 
     } catch (error) {
         console.error("🔥 Razorpay QR Error:", error);
-        res.status(500).json({ error: "Payment QR failed", details: error });
+        res.status(500).json({ error: "Payment QR failed", details: error.toString() });
     }
 });
 
@@ -338,5 +340,6 @@ app.post("/update-fcm-token", async (req, res) => {
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
 
 
