@@ -97,6 +97,7 @@ app.post("/create-payment", async (req, res) => {
         const qrData = {
               type: "upi_qr",   // not UPI QR
               usage: "single_use",
+              name: "QR",
               fixed_amount: true,
               payment_amount: amount * 100,
               description: description || "Payment",
@@ -333,6 +334,7 @@ app.post("/update-fcm-token", async (req, res) => {
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
 
 
 
