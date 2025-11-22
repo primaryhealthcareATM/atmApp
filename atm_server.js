@@ -95,7 +95,7 @@ app.post("/create-payment", async (req, res) => {
         }
         const randomReceipt = "rcpt_" + uuidv4();  // Add this line
         const qrData = {
-              type: "link_qr",   // not UPI QR
+              type: "upi_qr",   // not UPI QR
               usage: "single_use",
               fixed_amount: true,
               payment_amount: amount * 100,
@@ -333,6 +333,7 @@ app.post("/update-fcm-token", async (req, res) => {
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
 
 
 
