@@ -88,27 +88,24 @@ const razorpay = new Razorpay({
 // --------------------- ADD NEW ENDPOINT HERE ---------------------
 app.post("/create-payment", async (req, res) => {
     try {
-        const { amount, name, description } = req.body;
+        const { amount, name, description, upi_id } = req.body;
 
         if (!amount || isNaN(amount) || amount <= 0) {
             return res.status(400).json({ error: "Valid amount is required" });
         }
 
-        const randomReceipt = "rcpt_" + uuidv4();
-
         const qrData = {
-            type: "upi_qr",             // always UPI QR
-            usage: "single_use",        // single use
-            fixed_amount: true,         // fixed amount
-            payment_amount: amount * 100, // in paise
-            description: description || "Payment", // optional description
-            notes: { receipt: randomReceipt }
+            type: "upi_qr",
+            usage: "single_use",
+            fixed_amount: true,
+            payment_amount: Math.round(amount * 100), // in paise
+            description: description || "Payment",
+            notes: { receipt: "rcpt_" + uuidv4() }
         };
 
-        // Only add name if provided
         if (name) qrData.name = name;
+        if (upi_id) qrData.vpa = upi_id; // optional pre-fill UPI ID
 
-        // Create QR via Razorpay
         const qr = await razorpay.qrCode.create(qrData);
 
         res.json({
@@ -119,31 +116,27 @@ app.post("/create-payment", async (req, res) => {
 
     } catch (error) {
         console.error("🔥 Razorpay QR Error:", error);
-        res.status(500).json({ error: "Payment QR failed", details: error.toString() });
+        res.status(500).json({
+            error: "Payment QR failed",
+            details: error.error || error.toString()
+        });
     }
 });
 
-// Check payment status
+// ----------------- CHECK PAYMENT STATUS -----------------
 app.get("/payment-status/:id", async (req, res) => {
     try {
         const { id } = req.params;
-
         const payment = await razorpay.paymentLink.fetch(id);
-
         return res.status(200).json({
             success: true,
-            status: payment.status  // "paid", "pending", or "cancelled"
+            status: payment.status // "paid", "pending", "cancelled"
         });
-
     } catch (err) {
         console.error("🔥 Error checking payment:", err);
-        return res.status(500).json({
-            error: "Failed to fetch payment status",
-            details: err.toString()
-        });
+        return res.status(500).json({ error: "Failed to fetch payment status", details: err.toString() });
     }
 });
-
 
 // API Endpoints
 app.get('/', (req, res) => res.send('🚀 Server is running!'));
@@ -340,6 +333,7 @@ app.post("/update-fcm-token", async (req, res) => {
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
 
 
 
